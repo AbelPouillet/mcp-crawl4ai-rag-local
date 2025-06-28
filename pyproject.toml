@@ -1,5 +1,5 @@
 [project]
-name = "crawl4ai-mcp"
+name = "crawl4ai-mcp-local"
 version = "0.1.0"
 description = "MCP server for integrating web crawling and RAG into AI agents and AI coding assistants"
 readme = "README.md"
@@ -12,4 +12,5 @@ dependencies = [
     "dotenv==0.9.9",
     "sentence-transformers>=4.1.0",
     "neo4j>=5.28.1",
+    "ollama>=0.5.1",
 ]
