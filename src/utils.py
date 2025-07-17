@@ -8,7 +8,7 @@ from supabase import create_client, Client
 from urllib.parse import urlparse
 import re
 import time
-from ollama import chat, embed, ResponseError
+from ollama import chat, embed, Client as OllamaClient, ResponseError
 from mcp import server 
 
 def get_supabase_client() -> Client:
@@ -41,15 +41,20 @@ def create_embeddings_batch(texts: List[str]) -> List[List[float]]:
 
     max_retries = 3
     retry_delay = 1.0  # Start with 1 second delay
-    model_choice = os.getenv("OLLAMA_MODEL_EMBEDING")
+    model_choice_embeding  = os.getenv("OLLAMA_MODEL_EMBEDING")
+    model_choice_chat = os.getenv("OLLAMA_MODEL_CHAT")
+
+
+    ollamaClient = OllamaClient(
+        host=os.getenv("OLLAMA_HOST")
+    )
+
     for retry in range(max_retries):
         try:
             # Replace OpenAI API call with Ollama API call
-            response = embed.create(
-                model=model_choice, # Hardcoding embedding model for now, will change this later to be more dynamic
-                input=texts
-            )
-            return [item.embedding for item in response.data]
+            response = ollamaClient.embed(model=model_choice_embeding, input=texts)
+            return response["embeddings"]
+
         except Exception as e:
             if retry < max_retries - 1:
                 print(f"Error creating batch embeddings (attempt {retry + 1}/{max_retries}): {e}")
@@ -65,16 +70,13 @@ def create_embeddings_batch(texts: List[str]) -> List[List[float]]:
 
                 for i, text in enumerate(texts):
                     try:
-                        individual_response = embed.create(
-                            model=model_choice,
-                            input=[text]
-                        )
-                        embeddings.append(individual_response.data[0].embedding)
+                        response = ollamaClient.embed(model=model_choice_embeding, input=[text])
+                        embeddings.append(response["embeddings"][0])
                         successful_count += 1
                     except Exception as individual_error:
                         print(f"Failed to create embedding for text {i}: {individual_error}")
                         # Add zero embedding as fallback
-                        embeddings.append([0.0] * 1536)
+                        embeddings.append([0.0] * 768)
 
                 print(f"Successfully created {successful_count}/{len(texts)} embeddings individually")
                 return embeddings
@@ -91,11 +93,11 @@ def create_embedding(text: str) -> List[float]:
     """
     try:
         embeddings = create_embeddings_batch([text])
-        return embeddings[0] if embeddings else [0.0] * 1536
+        return embeddings[0] if embeddings else [0.0] * 768
     except Exception as e:
         print(f"Error creating embedding: {e}")
         # Return empty embedding if there's an error
-        return [0.0] * 1536
+        return [0.0] * 768
 
 def generate_contextual_embedding(full_document: str, chunk: str) -> Tuple[str, bool]:
     """
@@ -110,7 +112,7 @@ def generate_contextual_embedding(full_document: str, chunk: str) -> Tuple[str, 
         - The contextual text that situates the chunk within the document
         - Boolean indicating if contextual embedding was performed
     """
-    model_choice = os.getenv("OLLAMA_MODEL_EMBEDING")
+    model_choice_chat = os.getenv("OLLAMA_MODEL_CHAT")
 
     try:
         # Create the prompt for generating contextual information
@@ -124,18 +126,20 @@ Here is the chunk we want to situate within the whole document
 Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else."""
 
         # Call the Ollama API to generate contextual information
-        response = chat.completions.create(
-            model=model_choice,
+        ollamaClient = OllamaClient(
+                        host=os.getenv("OLLAMA_HOST"),
+                    )
+        response = ollamaClient.chat(
+
+            model=model_choice_chat,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that provides concise contextual information."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
-            max_tokens=200
         )
 
         # Extract the generated context
-        context = response.choices[0].message.content.strip()
+        context = response["message"]["content"].strip()
 
         # Combine the context with the original chunk
         contextual_text = f"{context}\n---\n{chunk}"
@@ -445,7 +449,7 @@ def generate_code_example_summary(code: str, context_before: str, context_after:
     Returns:
         A summary of what the code example demonstrates
     """
-    model_choice = os.getenv("OLLAMA_MODEL_EMBEDING")
+    model_choice_chat = os.getenv("OLLAMA_MODEL_CHAT")
 
     # Create the prompt
     prompt = f"""<context_before>
@@ -464,17 +468,21 @@ Based on the code example and its surrounding context, provide a concise summary
 """
 
     try:
-        response = chat.completions.create(
-            model=model_choice,
+        ollamaClient = OllamaClient(
+                        host=os.getenv("OLLAMA_HOST"),
+                    )
+        response = ollamaClient.chat(
+            model=model_choice_chat,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that provides concise code example summaries."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
-            max_tokens=100
+            options={
+                "num_ctx":100
+            }
         )
 
-        return response.choices[0].message.content.strip()
+        return response["message"]["content"].strip()
 
     except Exception as e:
         print(f"Error generating code example summary: {e}")
@@ -641,7 +649,7 @@ def extract_source_summary(source_id: str, content: str, max_length: int = 500) 
         return default_summary
 
     # Get the model choice from environment variables
-    model_choice = os.getenv("OLLAMA_MODEL_EMBEDING")
+    model_choice_chat = os.getenv("OLLAMA_MODEL_CHAT")
 
     # Limit content length to avoid token limits
     truncated_content = content[:25000] if len(content) > 25000 else content
@@ -656,18 +664,23 @@ The above content is from the documentation for '{source_id}'. Please provide a 
 
     try:
         # Call the Ollama API to generate the summary
-        response = chat.completions.create(
-            model=model_choice,
+        ollamaClient = OllamaClient(
+                host=os.getenv("OLLAMA_HOST"),
+            )
+        response = ollamaClient.chat(
+            model=model_choice_chat,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that provides concise library/tool/framework summaries."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
-            max_tokens=150
+            options={
+                "num_ctx":150
+            }
+            
         )
 
         # Extract the generated summary
-        summary = response.choices[0].message.content.strip()
+        summary = response["message"]["content"].strip()
 
         # Ensure the summary is not too long
         if len(summary) > max_length:

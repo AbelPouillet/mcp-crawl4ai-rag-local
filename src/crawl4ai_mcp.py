@@ -44,7 +44,7 @@ from utils import (
 
 # Import knowledge graph modules
 from knowledge_graph_validator import KnowledgeGraphValidator
-from parse_repo_into_neo4j import DirectNeo4jExtractor
+from parse_repo_into_neo4j  import DirectNeo4jExtractor
 from ai_script_analyzer import AIScriptAnalyzer
 from hallucination_reporter import HallucinationReporter
 
