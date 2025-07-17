@@ -118,7 +118,41 @@ def analyze_file_with_treesitter(filepath: Path):
     try:
         source_code = filepath.read_bytes()
         tree = parser.parse(source_code)
-        return tree
+        root = tree.root_node
+
+        # --- Analyse simple des noeuds de haut niveau ---
+        classes = []
+        functions = []
+
+        for node in root.children:
+            if node.type in ("function_definition", "function_declaration", "method_definition"):
+                functions.append({
+                    "name": _extract_identifier(source_code, node),
+                    "start_line": node.start_point[0],
+                    "end_line": node.end_point[0],
+                })
+            elif node.type in ("class_definition", "class_declaration"):
+                classes.append({
+                    "name": _extract_identifier(source_code, node),
+                    "start_line": node.start_point[0],
+                    "end_line": node.end_point[0],
+                })
+
+        return {
+            "file_path": str(filepath),
+            "module_name": filepath.stem,
+            "language": lang_key,
+            "line_count": len(source_code.splitlines()),
+            "classes": classes,
+            "functions": functions,
+        }
+
     except Exception as e:
         print(f"[!] Erreur d'analyse de {filepath.name} : {type(e).__name__}: {e}")
         return None
+def _extract_identifier(source_code: bytes, node):
+    # Recherche un identifiant dans les enfants directs
+    for child in node.children:
+        if child.type == "identifier":
+            return source_code[child.start_byte:child.end_byte].decode("utf-8")
+    return "<anonymous>"
