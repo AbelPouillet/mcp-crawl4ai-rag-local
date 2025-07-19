@@ -6,4 +6,4 @@ repos
 .claude
 test_script_hallucination*
 .continue
-knowledge_graphs/tree-sitter-grammar/*
+knowledge_graphs/tree-sitter-grammar/
