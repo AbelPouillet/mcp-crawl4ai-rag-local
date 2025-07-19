@@ -118,7 +118,16 @@ The server provides essential web crawling and search tools:
    ```bash
    uv pip install -e .
    crawl4ai-setup
-   uv pip install -r requirements.txt
+   uv pip install -r requirements.txt 
+
+   if tree_sitter make you some trouble to build wheel
+
+   ```bash
+    check-msvc-env.ps1
+   ``` follow script instruction
+      use x64 Native Tools Command Prompt for VS 2022
+      and run inside it "yourpathtothisrepo\mcp-crawl4ai-rag-local\.venv\Scripts\activate"
+      and 'pip install yourpathtothisrepo\mcp-crawl4ai-rag-local\requirements.txt'
    ```
 
 5. Create a `.env` file based on the configuration section below
@@ -186,11 +195,7 @@ HOST=0.0.0.0
 PORT=8051
 TRANSPORT=sse
 
-# OpenAI API Configuration
-OPENAI_API_KEY=your_openai_api_key
 
-# LLM for summaries and contextual embeddings
-MODEL_CHOICE=gpt-4.1-nano
 
 # RAG Strategies (set to "true" or "false", default to "false")
 USE_CONTEXTUAL_EMBEDDINGS=false
