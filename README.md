@@ -119,15 +119,13 @@ The server provides essential web crawling and search tools:
    uv pip install -e .
    crawl4ai-setup
    uv pip install -r requirements.txt 
-
+  ```
    if tree_sitter make you some trouble to build wheel
 
-   ```bash
-    check-msvc-env.ps1
-   ``` follow script instruction
-      use x64 Native Tools Command Prompt for VS 2022
-      and run inside it "yourpathtothisrepo\mcp-crawl4ai-rag-local\.venv\Scripts\activate"
-      and 'pip install yourpathtothisrepo\mcp-crawl4ai-rag-local\requirements.txt'
+    
+   ``` In x64 Native Tools Command Prompt for VS 2022
+      "yourpathtothisrepo\mcp-crawl4ai-rag-local\.venv\Scripts\activate"
+      'pip install yourpathtothisrepo\mcp-crawl4ai-rag-local\requirements.txt'
    ```
 
 5. Create a `.env` file based on the configuration section below
