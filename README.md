@@ -118,6 +118,7 @@ The server provides essential web crawling and search tools:
    ```bash
    uv pip install -e .
    crawl4ai-setup
+   uv pip install -r requirements.txt
    ```
 
 5. Create a `.env` file based on the configuration section below
