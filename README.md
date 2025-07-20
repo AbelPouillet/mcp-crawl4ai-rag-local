@@ -79,26 +79,12 @@ The server provides essential web crawling and search tools:
 
 ## Installation
 
-### Using Docker (Recommended)
-
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/coleam00/mcp-crawl4ai-rag.git
-   cd mcp-crawl4ai-rag
-   ```
-
-2. Build the Docker image:
-   ```bash
-   docker build -t mcp/crawl4ai-rag --build-arg PORT=8051 .
-   ```
-
-3. Create a `.env` file based on the configuration section below
 
 ### Using uv directly (no Docker)
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/coleam00/mcp-crawl4ai-rag.git
+   git clone https://github.com/AbelPouillet/mcp-crawl4ai-rag-local
    cd mcp-crawl4ai-rag
    ```
 
